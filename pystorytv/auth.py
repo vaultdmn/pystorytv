@@ -291,3 +291,54 @@ def interactive_login(console: Optional["Console"] = None) -> tuple[str, str]:
         if jwt:
             return "JWT_DIRECT", jwt
         raise e
+
+class AuthManager:
+    """Manager for OTPLess authentication and sessions."""
+    def __init__(self) -> None:
+        from pystorytv.config import Session
+        self.session = Session.load()
+
+    def is_logged_in(self) -> bool:
+        return self.session is not None
+
+    def request_otp(self, mobile: str, country_code: str = "+91") -> None:
+        """Request OTP. Returns nothing but stores state internally."""
+        # Strip '+' if present
+        cc = country_code.replace("+", "")
+        mobile_e164 = f"{cc}{mobile}"
+        
+        token, as_id, uid, ts_id, in_id, payload = send_otp_full(mobile_e164)
+        self._state = {
+            "token": token,
+            "as_id": as_id,
+            "uid": uid,
+            "ts_id": ts_id,
+            "in_id": in_id,
+            "payload": payload
+        }
+
+    def verify_otp(self, mobile: str, country_code: str, otp: str) -> None:
+        """Verifies OTP and creates a session."""
+        from pystorytv.client import StoryTVClient
+        from pystorytv.config import Session
+        
+        if not hasattr(self, "_state"):
+            raise RuntimeError("You must call request_otp() before verify_otp().")
+            
+        # 1. Verify with OTPLess
+        otpless_token, id_token = verify_otp_full(self._state, otp)
+        
+        # 2. Exchange for StoryTV JWT
+        temp_client = StoryTVClient(session=None)
+        auth_resp = temp_client.verify_otpless(otpless_token, id_token)
+        
+        # 3. Save session
+        self.session = Session(
+            jwt=auth_resp.jwt,
+            rft=auth_resp.rft,
+            user_id=auth_resp.user_id,
+            session_id=auth_resp.session_id,
+            mobile=auth_resp.mobile,
+            sub_stat=auth_resp.sub_stat,
+        )
+        self.session.save()
