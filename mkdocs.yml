@@ -1,0 +1,40 @@
+site_name: pystorytv
+site_url: https://pystorytv.vrma.dev
+site_description: Python API wrapper and CLI for StoryTV
+repo_url: https://github.com/vrma/pystorytv
+repo_name: vrma/pystorytv
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Python API:
+      - Authentication: api/auth.md
+      - Client: api/client.md
+      - Downloader: api/downloader.md
+  - Models: models.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - codehilite
